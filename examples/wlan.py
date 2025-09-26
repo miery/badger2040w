@@ -3,8 +3,8 @@ import badger2040
 import badger_os
 import machine
 
-# **** Tytuł listy *****
-list_title = "Wybór sieci Wi-Fi"
+# *** List Title ***
+list_title = "Wi-Fi Network Selection"
 list_file = "wifi_networks.txt"
 
 # Global Constants
@@ -23,7 +23,7 @@ LIST_PADDING = 2
 LIST_WIDTH = WIDTH - LIST_PADDING - LIST_PADDING - ARROW_WIDTH
 LIST_HEIGHT = HEIGHT - LIST_START - LIST_PADDING - ARROW_HEIGHT
 
-# Domyślne sieci - można edytować w wifi_networks.txt
+# Default networks - can be edited in wifi_networks.txt
 # Format: "SSID|PSK|COUNTRY"
 list_items = [
     "2.4G-WLAN|62a08f6646f43b8cdc188b00955ef18668b0a1fc7e9f33228064bc3ee4e34740|PL",
@@ -31,7 +31,6 @@ list_items = [
 ]
 
 save_list = False
-
 try:
     with open(list_file, "r") as f:
         raw_list_items = f.read().strip()
@@ -50,6 +49,7 @@ if save_list:
 # ------------------------------
 #      Drawing functions
 # ------------------------------
+
 def draw_list(items, start_item, highlighted_item, x, y, width, height, item_height, columns):
     item_x = 0
     item_y = 0
@@ -104,10 +104,10 @@ def update_wifi_config(selected_item):
 # ------------------------------
 #        Program setup
 # ------------------------------
+
 changed = True
 state = {"current_item": 0}
 badger_os.state_load("wifi_list", state)
-
 items_hash = binascii.crc32("\n".join(list_items))
 if "items_hash" not in state or state["items_hash"] != items_hash:
     state["current_item"] = 0
@@ -148,6 +148,7 @@ items_per_page = ((LIST_HEIGHT // ITEM_SPACING) + 1) * list_columns
 # ------------------------------
 #       Main program loop
 # ------------------------------
+
 while True:
     display.keepalive()
     if len(list_items) > 0:
@@ -158,17 +159,15 @@ while True:
                 if page != state["current_item"] // items_per_page:
                     display.update_speed(badger2040.UPDATE_FAST)
                 changed = True
-
         if display.pressed(badger2040.BUTTON_B):
             selected_item = list_items[state["current_item"]]
             update_wifi_config(selected_item)
             display.set_pen(15)
             display.clear()
             display.set_pen(0)
-            display.text("Zapisano!", 30, HEIGHT // 2, WIDTH, 1.0)
+            display.text("Saved!", 30, HEIGHT // 2, WIDTH, 1.0)
             display.update()
-            #display.halt(2000)
-
+            # display.halt(2000)
         if display.pressed(badger2040.BUTTON_C):
             if state["current_item"] < len(list_items) - 1:
                 page = state["current_item"] // items_per_page
@@ -176,12 +175,10 @@ while True:
                 if page != state["current_item"] // items_per_page:
                     display.update_speed(badger2040.UPDATE_FAST)
                 changed = True
-
         if display.pressed(badger2040.BUTTON_UP):
             if state["current_item"] > 0:
                 state["current_item"] -= 1
                 changed = True
-
         if display.pressed(badger2040.BUTTON_DOWN):
             if state["current_item"] < len(list_items) - 1:
                 state["current_item"] += 1
@@ -200,13 +197,11 @@ while True:
         y += 12
         display.set_pen(0)
         display.line(LIST_PADDING, y, WIDTH - LIST_PADDING - ARROW_WIDTH, y)
-
         if len(list_items) > 0:
             page_item = 0
             if items_per_page > 0:
                 page_item = (state["current_item"] // items_per_page) * items_per_page
             draw_list(list_items, page_item, state["current_item"], LIST_PADDING, LIST_START, LIST_WIDTH, LIST_HEIGHT, ITEM_SPACING, list_columns)
-
             # Draw the interaction button icons
             display.set_pen(0)
             if state["current_item"] > 0:
@@ -218,14 +213,11 @@ while True:
             if state["current_item"] < (len(list_items) - 1):
                 draw_right(((WIDTH * 6) // 7) - (ARROW_WIDTH // 2), HEIGHT - ARROW_HEIGHT, ARROW_WIDTH, ARROW_HEIGHT, ARROW_THICKNESS, ARROW_PADDING)
             draw_tick((WIDTH // 2) - (ARROW_WIDTH // 2), HEIGHT - ARROW_HEIGHT, ARROW_HEIGHT, ARROW_HEIGHT, ARROW_THICKNESS, ARROW_PADDING)
-
         else:
-            empty_text = "Brak sieci"
+            empty_text = "No networks"
             text_length = display.measure_text(empty_text, ITEM_TEXT_SIZE)
             display.text(empty_text, ((LIST_PADDING + LIST_WIDTH) - text_length) // 2, (LIST_HEIGHT // 2) + LIST_START - (ITEM_SPACING // 4), WIDTH, ITEM_TEXT_SIZE)
-
         display.update()
         display.set_update_speed(badger2040.UPDATE_TURBO)
         changed = False
-
     display.halt()
