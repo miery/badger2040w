@@ -1,18 +1,14 @@
+# Source got from https://github.com/chrissyhroberts and added my own changes
 # This example grabs current weather details from Open Meteo and displays them on Badger 2040 W.
 # Find out more about the Open Meteo API at https://open-meteo.com
-#
-#
-# V3.0 changes
-# Adds new method to prevent screenburn which inverts colours each time the screen refreshes
 import badger2040
 from badger2040 import WIDTH
 import urequests
 import jpegdec
 import machine
+from machine import Pin
 import random
 import time
-
-rtc = machine.RTC()
 
 # Set your latitude/longitude here (find yours by right clicking in Google Maps!)
 LAT = 53.10756265607374
@@ -30,47 +26,44 @@ bg = 0
 # Display Setup
 display = badger2040.Badger2040()
 
-
 display.led(128)
 display.set_update_speed(2)
 
 jpeg = jpegdec.JPEG(display.display)
 
+# detect exist USB power
+usb_detect = Pin('WL_GPIO2', Pin.IN)
 
 
 def get_data():
-    global weathercode, temperature, windspeed, winddirection, date, time_str, day_weathercode, apparent_temperature_max, apparent_temperature_min, sunrise, sunset, precipitation_sum, precipitation_probability_max, winddirection_10m_dominant
+    global weathercode, temperature, windspeed, winddirection, date, current_time_str, day_weathercode  # <-- zmiana nazwy
+    global apparent_temperature_max, apparent_temperature_min, sunrise, sunset
+    global precipitation_sum, precipitation_probability_max, winddirection_10m_dominant
+    global now_minutes
     print(f"Requesting URL: {URL}")
     r = urequests.get(URL)
-    # open the json data
     j = r.json()
     print("Data obtained!")
-    print(j)
-
-    # parse relevant data from JSON
     current = j["current_weather"]
     temperature = current["temperature"]
     windspeed = current["windspeed"]
     winddirection = calculate_bearing(current["winddirection"])
     weathercode = current["weathercode"]
-    date, time_str = current["time"].split("T")
-
+    # get current time from API
+    date, current_time_str = current["time"].split("T")  # <-- zmiana nazwy
+    hour, minute = map(int, current_time_str.split(":")[:2])  # <-- zmiana nazwy
+    now_minutes = hour * 60 + minute   # minutes since midnight
     daily = j["daily"]
     day_weathercode = daily["weathercode"]
     apparent_temperature_max = daily["apparent_temperature_max"]
     apparent_temperature_min = daily["apparent_temperature_min"]
-    sunrise = daily["sunrise"]
-    sunrise = sunrise[1]
-    sunrise = sunrise.split("T")[1]
-    sunset = daily["sunset"]
-    sunset = sunset[1]
-    sunset = sunset.split("T")[1]
-
-
-    precipitation_sum =    daily["precipitation_sum"]
-    precipitation_probability_max =    daily["precipitation_probability_max"]
-    winddirection_10m_dominant =     daily["winddirection_10m_dominant"]
-    winddirection_10m_dominant = calculate_bearing(winddirection_10m_dominant[1])
+    # today's sunrise and sunset
+    sunrise = daily["sunrise"][0].split("T")[1]
+    sunset = daily["sunset"][0].split("T")[1]
+    precipitation_sum = daily["precipitation_sum"]
+    precipitation_probability_max = daily["precipitation_probability_max"]
+    winddirection_10m_dominant = daily["winddirection_10m_dominant"]
+    winddirection_10m_dominant = calculate_bearing(winddirection_10m_dominant[0])
     r.close()
 
 def get_data_airquality():
@@ -107,6 +100,19 @@ def get_data_airquality():
 
     r2.close()
 
+def is_night():
+    # get current time from RTC
+    year, month, day, weekday, hour, minute, second, subseconds = machine.RTC().datetime()
+    now_minutes = hour * 60 + minute
+
+    # convert sunrise and sunset (e.g. "06:45") to minutes from midnight
+    sunrise_h, sunrise_m = map(int, sunrise.split(":"))
+    sunset_h, sunset_m = map(int, sunset.split(":"))
+    sunrise_minutes = sunrise_h * 60 + sunrise_m
+    sunset_minutes = sunset_h * 60 + sunset_m
+
+    # if the time is after sunset or before sunrise → night
+    return now_minutes < sunrise_minutes or now_minutes > sunset_minutes
 
 def calculate_bearing(d):
     # calculates a compass direction from the wind direction in degrees
@@ -216,7 +222,7 @@ def draw_page(text_color, background_color):
 
 #        display.text(f"Wind Direction: {winddirection}", int(WIDTH / 3), 68, WIDTH - 105, 2)
         display.set_pen(text_color)
-        display.text(f"Updated {time_str}", 100, 90, WIDTH - 105, 1)
+        display.text(f"Updated {current_time_str}", 100, 90, WIDTH - 105, 1)
 #  display pollen counts & particulate
         display.text(f"PM10  : {pm10}", 170, 15, WIDTH - 105, 1.5)
         display.text(f"Alder : {alder_pollen}", 170, 25, WIDTH - 105, 1.5)
@@ -243,28 +249,21 @@ def draw_page(text_color, background_color):
 print("connecting")
 display.connect()
 
-#get_data()
-#get_data_airquality()
-#draw_page(0, 15)
-#print("UV")
-#print (uv_index)
-
-# Call halt in a loop, on battery this switches off power.
-# On USB, the app will exit when A+C is pressed because the launcher picks that up.
 while True:
-    
-    # Define dark mode and light mode
-    actions = [
-    lambda: draw_page(0, 15),
-    lambda: draw_page(15, 0)
-    ]
-
-# Randomly select and execute one of the functions 
-    # do one cycle with dark mode colours
-    print("waking & printing dark mode")
     get_data()
-    get_data_airquality()       
-    random.choice(actions)()
-#Define the sleep interval between refreshes
-    print("sleeping")
-    time.sleep(600)
+    get_data_airquality()
+
+# Switch to dark background with light text after sunset, 
+# or light background with dark text during the day
+    if is_night():
+        draw_page(15, 0)   # light text on dark background
+    else:
+        draw_page(0, 15)   # dark text on light background
+
+# If running on USB power, refresh every 20 minutes (1200s).
+# If running on battery, put the display into deep sleep until next wake-up.
+    if usb_detect.value() == 1:
+        time.sleep(1200)
+    else:
+        display.halt()
+
