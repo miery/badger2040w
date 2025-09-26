@@ -1,7 +1,7 @@
 p00f inc
-T. Miernik
+T. Mier
 tel:
-+48 736 769 625
++48 736 XXX XXX
 
-tkmiernik@gmail.com
+@gmail.com
 /badges/tm.jpg
