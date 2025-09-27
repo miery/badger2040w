@@ -34,9 +34,8 @@ jpeg = jpegdec.JPEG(display.display)
 # detect exist USB power
 usb_detect = Pin('WL_GPIO2', Pin.IN)
 
-
 def get_data():
-    global weathercode, temperature, windspeed, winddirection, date, current_time_str, day_weathercode  # <-- zmiana nazwy
+    global weathercode, temperature, windspeed, winddirection, date, current_time_str, day_weathercode
     global apparent_temperature_max, apparent_temperature_min, sunrise, sunset
     global precipitation_sum, precipitation_probability_max, winddirection_10m_dominant
     global now_minutes
@@ -50,8 +49,8 @@ def get_data():
     winddirection = calculate_bearing(current["winddirection"])
     weathercode = current["weathercode"]
     # get current time from API
-    date, current_time_str = current["time"].split("T")  # <-- zmiana nazwy
-    hour, minute = map(int, current_time_str.split(":")[:2])  # <-- zmiana nazwy
+    date, current_time_str = current["time"].split("T")
+    hour, minute = map(int, current_time_str.split(":")[:2])
     now_minutes = hour * 60 + minute   # minutes since midnight
     daily = j["daily"]
     day_weathercode = daily["weathercode"]
@@ -101,9 +100,7 @@ def get_data_airquality():
     r2.close()
 
 def is_night():
-    # get current time from RTC
-    year, month, day, weekday, hour, minute, second, subseconds = machine.RTC().datetime()
-    now_minutes = hour * 60 + minute
+    global now_minutes, sunrise, sunset
 
     # convert sunrise and sunset (e.g. "06:45") to minutes from midnight
     sunrise_h, sunrise_m = map(int, sunrise.split(":"))
@@ -140,7 +137,7 @@ def draw_page(text_color, background_color):
     display.set_pen(text_color)
     display.rectangle(0, 0, WIDTH, 10)
     display.set_pen(background_color)
-    display.text("Weather @ p00fOS", 10, 1, WIDTH, 0.6) # parameters are left padding, top padding, width of screen area, font size
+    display.text("Weather in Bydgoszcz @ p00fOS", 10, 1, WIDTH, 0.6) # parameters are left padding, top padding, width of screen area, font size
     display.set_pen(text_color)
 
     display.set_font("bitmap8")
@@ -261,7 +258,7 @@ while True:
         draw_page(0, 15)   # dark text on light background
 
 # If running on USB power, refresh every 20 minutes (1200s).
-# If running on battery, put the display into deep sleep until next wake-up.
+# If running on battery, put the display into deep sleep until next wake-up by any button.
     if usb_detect.value() == 1:
         time.sleep(1200)
     else:
