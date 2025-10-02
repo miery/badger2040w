@@ -82,25 +82,7 @@ Call the `draw_battery_usage(x)` function in your main loop to display the batte
 ### Weather Display
 - The weather display updates automatically every 20 minutes when connected to USB power.
 - Press any button to wake the device from deep sleep when running on battery.
-
----
-
-## File Structure
-.
-├── battery.py          # Battery level indicator
-├── wifi_manager.py     # Wi-Fi network manager
-├── weather.py          # Weather display using Open Meteo API
-├── wifi_networks.txt   # List of Wi-Fi networks (SSID|PSK|COUNTRY)
-├── WIFI_CONFIG.py      # Generated Wi-Fi config file (SSID, PSK, COUNTRY)
-└── icons/              # Directory containing weather icons
-├── icon-sun.jpg
-├── icon-sun_dark.jpg
-├── icon-rain.jpg
-├── icon-rain_dark.jpg
-└── ...
-
----
-
+- 
 ## Customization
 
 ### Battery Level
