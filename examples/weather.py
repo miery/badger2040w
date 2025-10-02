@@ -11,8 +11,8 @@ import random
 import time
 
 # Set your latitude/longitude here (find yours by right clicking in Google Maps!)
-LAT = 53.10756265607374
-LNG = 18.050051703804588
+LAT = 23
+LNG = 15
 TIMEZONE = "auto"  # determines time zone from lat/long
 
 
