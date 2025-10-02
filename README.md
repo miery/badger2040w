@@ -14,7 +14,6 @@ Displays the current battery level as a percentage and a visual bar. Automatical
 - Calculates the battery level as a percentage based on the voltage range (4.2V = 100%, 2.8V = 0%).
 - Renders a battery icon, a progress bar, and the percentage value.
 - Detects USB power and displays a plug icon if the device is charging.
-
 ---
 
 ### 2. Wi-Fi Network Manager
@@ -30,7 +29,6 @@ Allows users to select and save Wi-Fi networks from a list. Networks are stored 
 - Loads networks from `wifi_networks.txt` (format: `SSID|PSK|COUNTRY`).
 - Renders a list with scrollable items and interactive buttons.
 - Updates the configuration file when a network is selected.
-
 ---
 
 ### 3. Weather Display
@@ -49,7 +47,6 @@ Fetches and displays current weather data, air quality, and pollen information f
 - Fetches weather data from the Open Meteo API.
 - Displays weather icons based on current conditions.
 - Updates the display automatically or on button press.
-
 ---
 
 ## Setup
@@ -94,12 +91,10 @@ Edit `wifi_networks.txt` to add or remove networks.
 ### Weather Display
 - Change the latitude (`LAT`) and longitude (`LNG`) in `weather.py` to display weather data for a different location.
 - Replace the icons in the `/icons/` directory to customize the visual style.
-
 ---
 
 ## License
 This project is open-source and available under the [MIT License](LICENSE).
-
 ---
 
 ## Credits
