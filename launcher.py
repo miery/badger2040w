@@ -49,9 +49,11 @@ WIDTH = 296
 en_pin = Pin(25, Pin.OUT)
 
 def draw_battery_usage(x):
-    full_battery = 4.2 
+    full_battery = 4.2
     empty_battery = 2.8
     usb_detect = Pin('WL_GPIO2', Pin.IN)
+
+    # Check if USB power is connected
     if usb_detect.value() == 1:
         plug_icon = bytearray((
             0b00111100, 0b01100110, 0b01000010, 0b01000010,
@@ -61,11 +63,11 @@ def draw_battery_usage(x):
         display.image(plug_icon, 8, 8, x + 85, 4)
         display.text("USB", x + 95, 4, WIDTH, 1.0)
     else:
-        # 2. Pomiar napięcia baterii
+        # Measure battery voltage
         en_pin.value(1)
         time.sleep(0.1)
         adc = ADC(29)
-        _ = adc.read_u16()  # Odrzuć pierwszą próbkę
+        _ = adc.read_u16()  # Discard the first sample
         total = 0
         for _ in range(10):
             total += adc.read_u16()
@@ -74,12 +76,14 @@ def draw_battery_usage(x):
         vsys_div = (avg_raw / 323.2) * 0.045
         battery_voltage = vsys_div * (full_battery / 0.045)
 
-        # 3. Obliczanie poziomu baterii
+        # Calculate battery level as a percentage
         b_level = 100.0 * (battery_voltage - empty_battery) / (full_battery - empty_battery)
-        b_level = max(0, min(100, b_level))  # Ograniczenie do 0-100%
-        b_level_rounded = 5 * round(b_level / 5)  # Zaokrąglanie do 5%
+        b_level = max(0, min(100, b_level))  # Clamp to 0-100%
 
-        # 4. Rysowanie ikony baterii
+        # Optimized rounding to nearest 5% with better precision
+        b_level_rounded = int(5 * round(b_level / 5))
+
+        # Draw battery icon
         battery_icon = bytearray((
             0b110011, 0b001100, 0b011110, 0b011110,
             0b010010, 0b010010, 0b010010, 0b011110, 0b000001
@@ -87,13 +91,13 @@ def draw_battery_usage(x):
         display.set_pen(15)
         display.image(battery_icon, 6, 9, x, 3)
 
-        # 5. Rysowanie paska i poziomu
+        # Draw battery outline and fill level
         display.rectangle(x + 8, 3, 80, 10)
         display.set_pen(0)
         display.rectangle(x + 9, 4, 78, 8)
         display.set_pen(15)
         display.rectangle(x + 10, 5, int(76.0 * (b_level / 100.0)), 6)
-        display.text("{:.0f}%".format(b_level_rounded), x + 91, 4, WIDTH, 1.0)
+        display.text(f"{b_level_rounded}%", x + 91, 4, WIDTH, 1.0)
         
 def draw_disk_usage(x):
     _, f_used, _ = badger_os.get_disk_usage()
